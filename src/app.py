@@ -9,7 +9,7 @@ st.title("Sean's AI Assist")
 client = OpenAI()
 
 if "openai_model" not in st.session_state:
-    st.session_state["openai_model"] = "gpt-4-turbo"
+    st.session_state["openai_model"] = "gpt-4-turbo-preview"
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
