@@ -1,36 +1,65 @@
-from openai import OpenAI
-import streamlit as st
 from dotenv import load_dotenv
+import time
+
+import streamlit as st
+from langchain.schema import HumanMessage, AIMessage
+from utils import get_response, check_password
 
 load_dotenv()
+st.set_page_config(page_title="💬 Shan's AI Chat Assist")
 
-st.title("Sean's AI Assist")
 
-client = OpenAI()
+if 'auth' not in st.session_state:
+    st.session_state['auth'] = False
 
-if "openai_model" not in st.session_state:
-    st.session_state["openai_model"] = "gpt-4-turbo-preview"
+if not st.session_state['auth']:
+    st.session_state['password'] = st.text_input("Enter your password:", type='password')
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+    if st.button('Submit'):
+        if check_password(st.session_state['password']):
+            st.session_state['auth'] = True
+            st.success('Password Correct! Press submit again to continue..')
+        else:
+            st.error('Password Incorrect. Please try again.')
+else:
+    st.title("Sean's AI Chat Assist")
 
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+    with st.sidebar:
+        loading_embedding = False
+        st.title("💬 Upload Embeddings")
+        text = st.text_area(label='Talk to your data! Enter the text you want to embed in database',
+                            key="embed_field")
 
-if prompt := st.chat_input("What is up?"):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+        if not loading_embedding:
+            upload_button = st.button('Upload')
 
-    with st.chat_message("assistant"):
-        stream = client.chat.completions.create(
-            model=st.session_state["openai_model"],
-            messages=[
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages
-            ],
-            stream=True,
-        )
-        response = st.write_stream(stream)
-    st.session_state.messages.append({"role": "assistant", "content": response})
+        if text and upload_button:
+            with st.spinner('Loading embeddings...'):
+                loading_embedding = True
+                time.sleep(10)
+                # load the embedding
+                st.success('Embedding loaded successfully!')
+
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
+
+    for message in st.session_state.chat_history:
+        if isinstance(message, HumanMessage):
+            with st.chat_message("Human"):
+                st.markdown(message.content)
+        else:
+            with st.chat_message("AI"):
+                st.markdown(message.content)
+
+    user_query = st.chat_input('Type Your Message..')
+    if user_query and user_query.strip() != "":
+        st.session_state.chat_history.append(HumanMessage(user_query))
+
+        with st.chat_message("Human"):
+            st.markdown(user_query)
+
+        with st.chat_message("AI"):
+            stream_response = get_response(user_query, st.session_state.chat_history)
+            ai_response = st.write_stream(stream_response)
+
+        st.session_state.chat_history.append(AIMessage(ai_response))
