@@ -15,7 +15,7 @@ if not st.session_state['auth']:
 
     if st.button('Continue') or st.session_state["password"] and st.session_state["password"].strip() != "":
         if check_password(st.session_state['password']):
-            logger.debug("User is authenticated")
+            logger.info("User is authenticated")
             st.session_state['auth'] = True
             st.success('Password Correct! Press continue button to access the chatbot..')
         else:

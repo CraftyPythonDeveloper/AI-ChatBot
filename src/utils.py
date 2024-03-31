@@ -8,7 +8,7 @@ from langchain_community.retrievers import EmbedchainRetriever
 
 
 load_dotenv()
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -47,7 +47,7 @@ def get_response(query, chat_history):
     chain = prompt | chat | StrOutputParser()
 
     results = retriever.get_relevant_documents(query)
-    logger.debug(f"retrieved {len(results)} results from chroma db for user query {query}")
+    logger.info(f"retrieved {len(results)} results from chroma db for user query {query}")
 
     return chain.stream({
         "context": results,
